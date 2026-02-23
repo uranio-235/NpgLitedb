@@ -32,6 +32,8 @@ public class LiteDbQueryExpression : Expression
     private bool _isCountQuery;
     private bool _isLongCountQuery;
     private ElementOperator _elementOperator;
+    private LambdaExpression? _groupByKeySelector;
+    private LambdaExpression? _groupByElementSelector;
 
     /// <summary>
     /// Creates a new instance of <see cref="LiteDbQueryExpression"/>.
@@ -122,6 +124,25 @@ public class LiteDbQueryExpression : Expression
     /// Sets the element operator for this query.
     /// </summary>
     public void SetElementOperator(ElementOperator op) => _elementOperator = op;
+
+    /// <summary>
+    /// Gets the GroupBy key selector.
+    /// </summary>
+    public LambdaExpression? GroupByKeySelector => _groupByKeySelector;
+
+    /// <summary>
+    /// Gets the GroupBy element selector.
+    /// </summary>
+    public LambdaExpression? GroupByElementSelector => _groupByElementSelector;
+
+    /// <summary>
+    /// Sets the GroupBy key selector (and optional element selector).
+    /// </summary>
+    public void SetGroupBy(LambdaExpression keySelector, LambdaExpression? elementSelector = null)
+    {
+        _groupByKeySelector = keySelector;
+        _groupByElementSelector = elementSelector;
+    }
 
     /// <inheritdoc />
     public override Type Type => typeof(IEnumerable<ValueBuffer>);

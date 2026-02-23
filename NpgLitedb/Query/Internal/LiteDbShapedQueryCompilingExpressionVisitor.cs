@@ -67,6 +67,12 @@ public class LiteDbShapedQueryCompilingExpressionVisitor : ShapedQueryCompilingE
         // Apply element operator (First→Take(1), Last→TakeLast(1), Single→no-op)
         resultExpression = ApplyElementOperator(resultExpression, liteDbQuery.ElementOperator, clrType);
 
+        // Apply GroupBy — returns IEnumerable<IGrouping<TKey, TElement>>
+        if (liteDbQuery.GroupByKeySelector is not null)
+        {
+            return ApplyGroupBy(resultExpression, liteDbQuery, clrType);
+        }
+
         // Apply Count/LongCount aggregation — wrap in single-element array
         // so the framework can call GetSequenceType() on the result
         if (liteDbQuery.IsCountQuery)
@@ -166,6 +172,41 @@ public class LiteDbShapedQueryCompilingExpressionVisitor : ShapedQueryCompilingE
             .MakeGenericMethod(elementType);
 
         return Expression.Call(null, method, source, Expression.Constant(1));
+    }
+
+    private static Expression ApplyGroupBy(
+        Expression source,
+        LiteDbQueryExpression liteDbQuery,
+        Type elementType)
+    {
+        var keySelector = liteDbQuery.GroupByKeySelector!;
+        var keyType = keySelector.ReturnType;
+
+        if (liteDbQuery.GroupByElementSelector is { } elementSelector)
+        {
+            // GroupBy(keySelector, elementSelector)
+            var resultElementType = elementSelector.ReturnType;
+            var groupByMethod = typeof(Enumerable)
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .First(m => m.Name == nameof(Enumerable.GroupBy)
+                            && m.GetParameters().Length == 3
+                            && m.GetGenericArguments().Length == 3)
+                .MakeGenericMethod(elementType, keyType, resultElementType);
+
+            return Expression.Call(null, groupByMethod, source, keySelector, elementSelector);
+        }
+        else
+        {
+            // GroupBy(keySelector)
+            var groupByMethod = typeof(Enumerable)
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .First(m => m.Name == nameof(Enumerable.GroupBy)
+                            && m.GetParameters().Length == 2
+                            && m.GetGenericArguments().Length == 2)
+                .MakeGenericMethod(elementType, keyType);
+
+            return Expression.Call(null, groupByMethod, source, keySelector);
+        }
     }
 }
 

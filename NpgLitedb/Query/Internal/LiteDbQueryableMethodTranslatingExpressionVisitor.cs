@@ -1,7 +1,8 @@
-using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Storage;
+
+using System.Linq.Expressions;
 
 namespace NpgLitedb.Query.Internal;
 
@@ -125,11 +126,27 @@ public class LiteDbQueryableMethodTranslatingExpressionVisitor
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateGroupBy(ShapedQueryExpression source, LambdaExpression keySelector, LambdaExpression? elementSelector, LambdaExpression? resultSelector)
-        => null; // Client evaluation
+    {
+        if (source.QueryExpression is not LiteDbQueryExpression liteDbQuery)
+            return null;
+
+        // Store groupBy info on the query expression
+        liteDbQuery.SetGroupBy(keySelector, elementSelector);
+
+        // For GroupBy as final operator (no resultSelector), create a GroupByShaperExpression
+        // so the framework knows the result type is IGrouping<TKey, TElement>
+        var groupByShaperExpression = new GroupByShaperExpression(
+            keySelector,
+            source);
+
+        return source.UpdateShaperExpression(groupByShaperExpression);
+    }
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateGroupJoin(ShapedQueryExpression outer, ShapedQueryExpression inner, LambdaExpression outerKeySelector, LambdaExpression innerKeySelector, LambdaExpression resultSelector)
-        => null; // Client evaluation
+        => throw new InvalidOperationException(
+            "GroupJoin is not supported by the LiteDB provider. " +
+            "LiteDB is a document database and does not support server-side cross-collection joins.");
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateIntersect(ShapedQueryExpression source1, ShapedQueryExpression source2)
@@ -219,11 +236,19 @@ public class LiteDbQueryableMethodTranslatingExpressionVisitor
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateSelectMany(ShapedQueryExpression source, LambdaExpression collectionSelector, LambdaExpression resultSelector)
-        => null; // Client evaluation
+        => throw new InvalidOperationException(
+            "SelectMany is not supported by the LiteDB provider. " +
+            "LiteDB is a document database and does not support server-side cross-collection flattening. " +
+            "Use '.AsEnumerable()' or '.ToList()' before calling SelectMany to perform the operation on the client side. " +
+            "Example: context.Orders.AsEnumerable().SelectMany(...)");
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateSelectMany(ShapedQueryExpression source, LambdaExpression selector)
-        => null; // Client evaluation
+        => throw new InvalidOperationException(
+            "SelectMany is not supported by the LiteDB provider. " +
+            "LiteDB is a document database and does not support server-side cross-collection flattening. " +
+            "Use '.AsEnumerable()' or '.ToList()' before calling SelectMany to perform the operation on the client side. " +
+            "Example: context.Orders.AsEnumerable().SelectMany(...)");
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateSingleOrDefault(ShapedQueryExpression source, LambdaExpression? predicate, Type returnType, bool returnDefault)
