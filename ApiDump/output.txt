@@ -1,0 +1,61 @@
+=== IDatabase ===
+Int32 SaveChanges(System.Collections.Generic.IList`1[Microsoft.EntityFrameworkCore.Update.IUpdateEntry])
+System.Threading.Tasks.Task`1[System.Int32] SaveChangesAsync(System.Collections.Generic.IList`1[Microsoft.EntityFrameworkCore.Update.IUpdateEntry], System.Threading.CancellationToken)
+System.Func`2[Microsoft.EntityFrameworkCore.Query.QueryContext,TResult] CompileQuery[TResult](System.Linq.Expressions.Expression, Boolean)
+System.Linq.Expressions.Expression`1[System.Func`2[Microsoft.EntityFrameworkCore.Query.QueryContext,TResult]] CompileQueryExpression[TResult](System.Linq.Expressions.Expression, Boolean)
+=== IQMTEVFactory ===
+Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor Create(Microsoft.EntityFrameworkCore.Query.QueryCompilationContext)
+=== QMTEV ctors ===
+Void .ctor(Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitorDependencies, Microsoft.EntityFrameworkCore.Query.QueryCompilationContext, Boolean)
+=== QMTEV abstract ===
+Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor CreateSubqueryVisitor()
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression CreateShapedQueryExpression(Microsoft.EntityFrameworkCore.Metadata.IEntityType)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateAll(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateAny(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateAverage(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, System.Type)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateCast(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Type)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateConcat(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateContains(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.Expression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateCount(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateDefaultIfEmpty(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.Expression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateDistinct(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateElementAtOrDefault(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.Expression, Boolean)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateExcept(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateFirstOrDefault(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, System.Type, Boolean)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateGroupBy(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, System.Linq.Expressions.LambdaExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateGroupJoin(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, System.Linq.Expressions.LambdaExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateIntersect(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateJoin(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, System.Linq.Expressions.LambdaExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateLeftJoin(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, System.Linq.Expressions.LambdaExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateRightJoin(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, System.Linq.Expressions.LambdaExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateLastOrDefault(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, System.Type, Boolean)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateLongCount(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateMax(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, System.Type)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateMin(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, System.Type)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateOfType(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Type)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateOrderBy(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, Boolean)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateReverse(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateSelect(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateSelectMany(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateSelectMany(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateSingleOrDefault(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, System.Type, Boolean)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateSkip(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.Expression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateSkipWhile(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateSum(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, System.Type)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateTake(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.Expression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateTakeWhile(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateThenBy(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression, Boolean)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateUnion(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression)
+Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression TranslateWhere(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression, System.Linq.Expressions.LambdaExpression)
+=== SQCEV ===
+Void .ctor(Microsoft.EntityFrameworkCore.Query.ShapedQueryCompilingExpressionVisitorDependencies, Microsoft.EntityFrameworkCore.Query.QueryCompilationContext)
+abstract: System.Linq.Expressions.Expression VisitShapedQuery(Microsoft.EntityFrameworkCore.Query.ShapedQueryExpression)
+=== CoreTypeMapping ===
+IsAbstract: True
+=== VG abstract ===
+Int32 Next(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry)
+Boolean get_GeneratesTemporaryValues()
+=== Shaper types ===
+Microsoft.EntityFrameworkCore.Query.GroupByShaperExpression
+Microsoft.EntityFrameworkCore.Query.StructuralTypeShaperExpression
+=== TypeMappingSource ===

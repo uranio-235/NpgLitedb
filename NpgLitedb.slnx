@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="NpgLitedb/NpgLitedb.csproj" />
+  <Project Path="Test/Test.csproj" />
+</Solution>

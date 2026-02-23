@@ -1,0 +1,203 @@
+using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Storage;
+
+namespace NpgLitedb.Query.Internal;
+
+/// <summary>
+/// Translates LINQ queryable method calls into a form that can be processed for LiteDB.
+/// This visitor converts LINQ operations into <see cref="ShapedQueryExpression"/> instances
+/// that use <see cref="LiteDbQueryExpression"/> as the query expression.
+/// </summary>
+public class LiteDbQueryableMethodTranslatingExpressionVisitor
+    : QueryableMethodTranslatingExpressionVisitor
+{
+    private readonly QueryCompilationContext _queryCompilationContext;
+
+    /// <summary>
+    /// Creates a new instance.
+    /// </summary>
+    public LiteDbQueryableMethodTranslatingExpressionVisitor(
+        QueryableMethodTranslatingExpressionVisitorDependencies dependencies,
+        QueryCompilationContext queryCompilationContext)
+        : base(dependencies, queryCompilationContext, subquery: false)
+    {
+        _queryCompilationContext = queryCompilationContext;
+    }
+
+    /// <summary>
+    /// Creates a new instance for subquery translation.
+    /// </summary>
+    protected LiteDbQueryableMethodTranslatingExpressionVisitor(
+        LiteDbQueryableMethodTranslatingExpressionVisitor parentVisitor)
+        : base(parentVisitor.Dependencies, parentVisitor._queryCompilationContext, subquery: true)
+    {
+        _queryCompilationContext = parentVisitor._queryCompilationContext;
+    }
+
+    /// <inheritdoc />
+    protected override QueryableMethodTranslatingExpressionVisitor CreateSubqueryVisitor()
+        => new LiteDbQueryableMethodTranslatingExpressionVisitor(this);
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression CreateShapedQueryExpression(IEntityType entityType)
+    {
+        var queryExpression = new LiteDbQueryExpression(entityType);
+
+        var entityShaperExpression = new StructuralTypeShaperExpression(
+            entityType,
+            new ProjectionBindingExpression(queryExpression, new ProjectionMember(), typeof(ValueBuffer)),
+            false);
+
+        return new ShapedQueryExpression(queryExpression, entityShaperExpression);
+    }
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateAll(ShapedQueryExpression source, LambdaExpression predicate)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateAny(ShapedQueryExpression source, LambdaExpression? predicate)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateAverage(ShapedQueryExpression source, LambdaExpression? selector, Type resultType)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateCast(ShapedQueryExpression source, Type castType)
+        => source; // Pass-through
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateConcat(ShapedQueryExpression source1, ShapedQueryExpression source2)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateContains(ShapedQueryExpression source, Expression item)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateCount(ShapedQueryExpression source, LambdaExpression? predicate)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateDefaultIfEmpty(ShapedQueryExpression source, Expression? defaultValue)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateDistinct(ShapedQueryExpression source)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateElementAtOrDefault(ShapedQueryExpression source, Expression index, bool returnDefault)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateExcept(ShapedQueryExpression source1, ShapedQueryExpression source2)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateFirstOrDefault(ShapedQueryExpression source, LambdaExpression? predicate, Type returnType, bool returnDefault)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateGroupBy(ShapedQueryExpression source, LambdaExpression keySelector, LambdaExpression? elementSelector, LambdaExpression? resultSelector)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateGroupJoin(ShapedQueryExpression outer, ShapedQueryExpression inner, LambdaExpression outerKeySelector, LambdaExpression innerKeySelector, LambdaExpression resultSelector)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateIntersect(ShapedQueryExpression source1, ShapedQueryExpression source2)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateJoin(ShapedQueryExpression outer, ShapedQueryExpression inner, LambdaExpression outerKeySelector, LambdaExpression innerKeySelector, LambdaExpression resultSelector)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateLastOrDefault(ShapedQueryExpression source, LambdaExpression? predicate, Type returnType, bool returnDefault)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateLeftJoin(ShapedQueryExpression outer, ShapedQueryExpression inner, LambdaExpression outerKeySelector, LambdaExpression innerKeySelector, LambdaExpression resultSelector)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateRightJoin(ShapedQueryExpression outer, ShapedQueryExpression inner, LambdaExpression outerKeySelector, LambdaExpression innerKeySelector, LambdaExpression resultSelector)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateLongCount(ShapedQueryExpression source, LambdaExpression? predicate)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateMax(ShapedQueryExpression source, LambdaExpression? selector, Type resultType)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateMin(ShapedQueryExpression source, LambdaExpression? selector, Type resultType)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateOfType(ShapedQueryExpression source, Type resultType)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateOrderBy(ShapedQueryExpression source, LambdaExpression keySelector, bool ascending)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateReverse(ShapedQueryExpression source)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateSelect(ShapedQueryExpression source, LambdaExpression selector)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateSelectMany(ShapedQueryExpression source, LambdaExpression collectionSelector, LambdaExpression resultSelector)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateSelectMany(ShapedQueryExpression source, LambdaExpression selector)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateSingleOrDefault(ShapedQueryExpression source, LambdaExpression? predicate, Type returnType, bool returnDefault)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateSkip(ShapedQueryExpression source, Expression count)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateSkipWhile(ShapedQueryExpression source, LambdaExpression predicate)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateSum(ShapedQueryExpression source, LambdaExpression? selector, Type resultType)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateTake(ShapedQueryExpression source, Expression count)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateTakeWhile(ShapedQueryExpression source, LambdaExpression predicate)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateThenBy(ShapedQueryExpression source, LambdaExpression keySelector, bool ascending)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateUnion(ShapedQueryExpression source1, ShapedQueryExpression source2)
+        => null; // Client evaluation
+
+    /// <inheritdoc />
+    protected override ShapedQueryExpression? TranslateWhere(ShapedQueryExpression source, LambdaExpression predicate)
+        => null; // Client evaluation
+}
