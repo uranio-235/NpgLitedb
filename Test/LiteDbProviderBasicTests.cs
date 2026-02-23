@@ -1,46 +1,9 @@
 ﻿using LiteDB;
-using Microsoft.EntityFrameworkCore;
-using NpgLitedb.Extensions;
+
+using Test.DAL;
+using Test.Entity;
 
 namespace Test;
-
-#region Test Entities
-
-public class Customer
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public int Age { get; set; }
-    public bool IsActive { get; set; }
-}
-
-public class Product
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public decimal Price { get; set; }
-    public int Stock { get; set; }
-}
-
-public class TestDbContext : DbContext
-{
-    private readonly string _dbPath;
-
-    public TestDbContext(string dbPath)
-    {
-        _dbPath = dbPath;
-    }
-
-    public DbSet<Customer> Customers => Set<Customer>();
-    public DbSet<Product> Products => Set<Product>();
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseLiteDb(_dbPath);
-    }
-}
-
-#endregion
 
 [TestClass]
 public sealed class LiteDbProviderBasicTests
