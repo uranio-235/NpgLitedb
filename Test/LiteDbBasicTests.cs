@@ -1,41 +1,23 @@
-﻿using LiteDB;
-
-using Test.DAL;
-using Test.Entity;
+﻿using Test.Entity;
 
 namespace Test;
 
 [TestClass]
-public sealed class LiteDbProviderBasicTests
+public sealed class LiteDbBasicTests : LiteDbTestBase
 {
-    private string _dbPath = null!;
-
-    [TestInitialize]
-    public void Setup()
-    {
-        _dbPath = Path.Combine(Path.GetTempPath(), $"litedb_test_{Guid.NewGuid():N}.db");
-    }
-
-    [TestCleanup]
-    public void Cleanup()
-    {
-        try { File.Delete(_dbPath); } catch { }
-        try { File.Delete(_dbPath + "-log"); } catch { }
-    }
-
     [TestMethod]
     public void CanCreateDatabase()
     {
-        using var context = new TestDbContext(_dbPath);
+        using var context = CreateContext();
         var created = context.Database.EnsureCreated();
         Assert.IsTrue(created);
-        Assert.IsTrue(File.Exists(_dbPath));
+        Assert.IsTrue(File.Exists(DbPath));
     }
 
     [TestMethod]
     public void CanInsertAndRetrieveEntity()
     {
-        using (var context = new TestDbContext(_dbPath))
+        using (var context = CreateContext())
         {
             context.Database.EnsureCreated();
 
@@ -53,7 +35,7 @@ public sealed class LiteDbProviderBasicTests
         }
 
         // Read back in a new context
-        using (var context = new TestDbContext(_dbPath))
+        using (var context = CreateContext())
         {
             var customers = context.Customers.ToList();
 
@@ -67,7 +49,7 @@ public sealed class LiteDbProviderBasicTests
     [TestMethod]
     public void CanInsertMultipleEntities()
     {
-        using var context = new TestDbContext(_dbPath);
+        using var context = CreateContext();
         context.Database.EnsureCreated();
 
         context.Customers.AddRange(
@@ -86,7 +68,7 @@ public sealed class LiteDbProviderBasicTests
     [TestMethod]
     public void CanUpdateEntity()
     {
-        using (var context = new TestDbContext(_dbPath))
+        using (var context = CreateContext())
         {
             context.Database.EnsureCreated();
 
@@ -95,7 +77,7 @@ public sealed class LiteDbProviderBasicTests
             context.SaveChanges();
         }
 
-        using (var context = new TestDbContext(_dbPath))
+        using (var context = CreateContext())
         {
             var customer = context.Customers.ToList().First();
             customer.Name = "Updated";
@@ -103,7 +85,7 @@ public sealed class LiteDbProviderBasicTests
             context.SaveChanges();
         }
 
-        using (var context = new TestDbContext(_dbPath))
+        using (var context = CreateContext())
         {
             var customer = context.Customers.ToList().First();
             Assert.AreEqual("Updated", customer.Name);
@@ -114,7 +96,7 @@ public sealed class LiteDbProviderBasicTests
     [TestMethod]
     public void CanDeleteEntity()
     {
-        using (var context = new TestDbContext(_dbPath))
+        using (var context = CreateContext())
         {
             context.Database.EnsureCreated();
 
@@ -125,7 +107,7 @@ public sealed class LiteDbProviderBasicTests
             context.SaveChanges();
         }
 
-        using (var context = new TestDbContext(_dbPath))
+        using (var context = CreateContext())
         {
             var toDelete = context.Customers.ToList().First(c => c.Name == "Delete");
             context.Customers.Remove(toDelete);
@@ -133,7 +115,7 @@ public sealed class LiteDbProviderBasicTests
             Assert.AreEqual(1, deleted);
         }
 
-        using (var context = new TestDbContext(_dbPath))
+        using (var context = CreateContext())
         {
             var remaining = context.Customers.ToList();
             Assert.AreEqual(1, remaining.Count);
@@ -144,7 +126,7 @@ public sealed class LiteDbProviderBasicTests
     [TestMethod]
     public void CanWorkWithMultipleEntityTypes()
     {
-        using var context = new TestDbContext(_dbPath);
+        using var context = CreateContext();
         context.Database.EnsureCreated();
 
         context.Customers.Add(new Customer { Name = "Buyer", Age = 28, IsActive = true });
@@ -163,19 +145,19 @@ public sealed class LiteDbProviderBasicTests
     [TestMethod]
     public void EnsureDeletedDropsAllCollections()
     {
-        using (var context = new TestDbContext(_dbPath))
+        using (var context = CreateContext())
         {
             context.Database.EnsureCreated();
             context.Customers.Add(new Customer { Name = "Test", Age = 1, IsActive = true });
             context.SaveChanges();
         }
 
-        using (var context = new TestDbContext(_dbPath))
+        using (var context = CreateContext())
         {
             context.Database.EnsureDeleted();
         }
 
-        using (var context = new TestDbContext(_dbPath))
+        using (var context = CreateContext())
         {
             var customers = context.Customers.ToList();
             Assert.AreEqual(0, customers.Count);
@@ -185,14 +167,14 @@ public sealed class LiteDbProviderBasicTests
     [TestMethod]
     public void CanConnectReturnsTrue()
     {
-        using var context = new TestDbContext(_dbPath);
+        using var context = CreateContext();
         Assert.IsTrue(context.Database.CanConnect());
     }
 
     [TestMethod]
     public async Task CanInsertAndRetrieveAsync()
     {
-        await using (var context = new TestDbContext(_dbPath))
+        await using (var context = CreateContext())
         {
             await context.Database.EnsureCreatedAsync();
 
@@ -201,7 +183,7 @@ public sealed class LiteDbProviderBasicTests
             Assert.AreEqual(1, saved);
         }
 
-        await using (var context = new TestDbContext(_dbPath))
+        await using (var context = CreateContext())
         {
             var customers = context.Customers.ToList();
             Assert.AreEqual(1, customers.Count);
@@ -212,7 +194,7 @@ public sealed class LiteDbProviderBasicTests
     [TestMethod]
     public void CanHandleDecimalPrecision()
     {
-        using var context = new TestDbContext(_dbPath);
+        using var context = CreateContext();
         context.Database.EnsureCreated();
 
         context.Products.Add(new Product { Name = "Precise", Price = 123456.789m, Stock = 1 });

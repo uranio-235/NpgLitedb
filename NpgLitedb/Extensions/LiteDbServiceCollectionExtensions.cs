@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 using NpgLitedb.Diagnostics.Internal;
 using NpgLitedb.Infrastructure.Internal;
+using NpgLitedb.Metadata.Conventions;
 using NpgLitedb.Query.Internal;
 using NpgLitedb.Storage.Internal;
 using NpgLitedb.ValueGeneration.Internal;

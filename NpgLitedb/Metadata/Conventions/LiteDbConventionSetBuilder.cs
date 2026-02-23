@@ -1,9 +1,7 @@
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
 
-namespace NpgLitedb.Storage.Internal;
+namespace NpgLitedb.Metadata.Conventions;
 
 /// <summary>
 /// Convention set builder for LiteDB. Adds LiteDB-specific conventions.

@@ -36,27 +36,136 @@ public class LiteDbShapedQueryCompilingExpressionVisitor : ShapedQueryCompilingE
     {
         if (shapedQueryExpression.QueryExpression is LiteDbQueryExpression liteDbQuery)
         {
-            var entityType = liteDbQuery.EntityType;
-            var clrType = entityType.ClrType;
-
-            var executeMethod = typeof(LiteDbQueryHelper)
-                .GetMethod(nameof(LiteDbQueryHelper.ExecuteQuery), BindingFlags.Public | BindingFlags.Static)!
-                .MakeGenericMethod(clrType);
-
-            // Use the framework's QueryContext parameter - the framework wraps this in a lambda
-            var callExpression = Expression.Call(
-                executeMethod,
-                QueryCompilationContext.QueryContextParameter,
-                Expression.Constant(liteDbQuery.CollectionName),
-                Expression.Constant(entityType.GetProperties().ToArray()),
-                Expression.Constant(entityType),
-                Expression.Constant(_isTracking));
-
-            return callExpression;
+            return CompileEntityQuery(liteDbQuery);
         }
 
         throw new InvalidOperationException(
             $"Unknown query expression type: {shapedQueryExpression.QueryExpression.GetType().Name}");
+    }
+
+    private Expression CompileEntityQuery(LiteDbQueryExpression liteDbQuery)
+    {
+        var entityType = liteDbQuery.EntityType;
+        var clrType = entityType.ClrType;
+
+        var executeMethod = typeof(LiteDbQueryHelper)
+            .GetMethod(nameof(LiteDbQueryHelper.ExecuteQuery), BindingFlags.Public | BindingFlags.Static)!
+            .MakeGenericMethod(clrType);
+
+        Expression resultExpression = Expression.Call(
+            executeMethod,
+            QueryCompilationContext.QueryContextParameter,
+            Expression.Constant(liteDbQuery.CollectionName),
+            Expression.Constant(entityType.GetProperties().ToArray()),
+            Expression.Constant(entityType),
+            Expression.Constant(_isTracking && !liteDbQuery.IsCountQuery && !liteDbQuery.IsLongCountQuery),
+            Expression.Constant(liteDbQuery.Predicates.ToArray()));
+
+        // Apply orderings: OrderBy/ThenBy chain
+        resultExpression = ApplyOrderings(resultExpression, liteDbQuery.Orderings, clrType);
+
+        // Apply element operator (First→Take(1), Last→TakeLast(1), Single→no-op)
+        resultExpression = ApplyElementOperator(resultExpression, liteDbQuery.ElementOperator, clrType);
+
+        // Apply Count/LongCount aggregation — wrap in single-element array
+        // so the framework can call GetSequenceType() on the result
+        if (liteDbQuery.IsCountQuery)
+        {
+            var countMethod = typeof(Enumerable)
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .First(m => m.Name == nameof(Enumerable.Count) && m.GetParameters().Length == 1)
+                .MakeGenericMethod(clrType);
+
+            var countCall = Expression.Call(null, countMethod, resultExpression);
+            return Expression.NewArrayInit(typeof(int), countCall);
+        }
+
+        if (liteDbQuery.IsLongCountQuery)
+        {
+            var longCountMethod = typeof(Enumerable)
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .First(m => m.Name == nameof(Enumerable.LongCount) && m.GetParameters().Length == 1)
+                .MakeGenericMethod(clrType);
+
+            var longCountCall = Expression.Call(null, longCountMethod, resultExpression);
+            return Expression.NewArrayInit(typeof(long), longCountCall);
+        }
+
+        // Apply Select projection
+        if (liteDbQuery.Selector is not null)
+        {
+            var selector = liteDbQuery.Selector;
+            var selectMethod = typeof(Enumerable)
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .First(m => m.Name == nameof(Enumerable.Select)
+                            && m.GetParameters().Length == 2
+                            && m.GetParameters()[1].ParameterType.GetGenericArguments().Length == 2)
+                .MakeGenericMethod(clrType, selector.ReturnType);
+
+            resultExpression = Expression.Call(null, selectMethod, resultExpression, selector);
+        }
+
+        return resultExpression;
+    }
+
+    private static Expression ApplyOrderings(
+        Expression source,
+        IReadOnlyList<(LambdaExpression KeySelector, bool Ascending)> orderings,
+        Type elementType)
+    {
+        if (orderings.Count == 0)
+            return source;
+
+        var result = source;
+
+        for (var i = 0; i < orderings.Count; i++)
+        {
+            var (keySelector, ascending) = orderings[i];
+            var keyType = keySelector.ReturnType;
+
+            string methodName;
+            if (i == 0)
+                methodName = ascending ? nameof(Enumerable.OrderBy) : nameof(Enumerable.OrderByDescending);
+            else
+                methodName = ascending ? nameof(Enumerable.ThenBy) : nameof(Enumerable.ThenByDescending);
+
+            var method = typeof(Enumerable)
+                .GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .First(m => m.Name == methodName
+                            && m.GetParameters().Length == 2)
+                .MakeGenericMethod(elementType, keyType);
+
+            result = Expression.Call(null, method, result, keySelector);
+        }
+
+        return result;
+    }
+
+    private static Expression ApplyElementOperator(
+        Expression source,
+        ElementOperator elementOperator,
+        Type elementType)
+    {
+        if (elementOperator is ElementOperator.None
+            or ElementOperator.Single
+            or ElementOperator.SingleOrDefault)
+        {
+            return source;
+        }
+
+        // First/FirstOrDefault → Take(1), Last/LastOrDefault → TakeLast(1)
+        var methodName = elementOperator is ElementOperator.First or ElementOperator.FirstOrDefault
+            ? nameof(Enumerable.Take)
+            : nameof(Enumerable.TakeLast);
+
+        var method = typeof(Enumerable)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .First(m => m.Name == methodName
+                        && m.GetParameters().Length == 2
+                        && m.GetParameters()[1].ParameterType == typeof(int))
+            .MakeGenericMethod(elementType);
+
+        return Expression.Call(null, method, source, Expression.Constant(1));
     }
 }
 
@@ -73,7 +182,8 @@ public static class LiteDbQueryHelper
         string collectionName,
         IProperty[] properties,
         IEntityType entityType,
-        bool isTracking)
+        bool isTracking,
+        LambdaExpression[] predicates)
     {
         var connection = queryContext.Context.GetService<ILiteDbConnection>();
         var collection = connection.GetCollection(collectionName);
@@ -81,6 +191,13 @@ public static class LiteDbQueryHelper
 
         var stateManager = queryContext.Context.GetService<IStateManager>();
         var keyProperties = entityType.FindPrimaryKey()?.Properties.ToArray();
+
+        // Compile predicates into typed delegates once
+        var compiledFilters = new List<Func<T, bool>>(predicates.Length);
+        foreach (var predicate in predicates)
+        {
+            compiledFilters.Add((Func<T, bool>)predicate.Compile());
+        }
 
         foreach (var doc in documents)
         {
@@ -120,7 +237,12 @@ public static class LiteDbQueryHelper
                 var existingEntry = stateManager.TryGetEntry(key, keyValues);
                 if (existingEntry != null)
                 {
-                    yield return (T)existingEntry.Entity;
+                    var tracked = (T)existingEntry.Entity;
+                    if (PassesFilters(tracked, compiledFilters))
+                    {
+                        yield return tracked;
+                    }
+
                     continue;
                 }
             }
@@ -132,6 +254,12 @@ public static class LiteDbQueryHelper
                 property.PropertyInfo?.SetValue(entity, value);
             }
 
+            // Apply filter predicates
+            if (!PassesFilters(entity, compiledFilters))
+            {
+                continue;
+            }
+
             if (isTracking)
             {
                 var entry = stateManager.GetOrCreateEntry(entity!, entityType);
@@ -140,5 +268,18 @@ public static class LiteDbQueryHelper
 
             yield return entity;
         }
+    }
+
+    private static bool PassesFilters<T>(T entity, List<Func<T, bool>> filters)
+    {
+        foreach (var filter in filters)
+        {
+            if (!filter(entity))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

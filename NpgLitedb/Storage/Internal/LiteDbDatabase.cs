@@ -217,8 +217,7 @@ public class LiteDbDatabase : IDatabase
         // propagate it back to the entity
         if (doc.TryGetValue("_id", out var idValue))
         {
-            var currentValue = entry.GetCurrentValue(keyProperty);
-            if (currentValue == null || IsDefaultValue(currentValue, keyProperty.ClrType))
+            if (entry.HasTemporaryValue(keyProperty))
             {
                 var convertedValue = ConvertFromBsonValue(idValue, keyProperty.ClrType);
                 if (convertedValue != null)
@@ -229,11 +228,4 @@ public class LiteDbDatabase : IDatabase
         }
     }
 
-    private static bool IsDefaultValue(object value, Type type)
-    {
-        if (type == typeof(int)) return (int)value == 0;
-        if (type == typeof(long)) return (long)value == 0;
-        if (type == typeof(Guid)) return (Guid)value == Guid.Empty;
-        return false;
     }
-}

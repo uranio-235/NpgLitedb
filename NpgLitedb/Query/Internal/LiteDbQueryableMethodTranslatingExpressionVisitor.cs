@@ -79,7 +79,18 @@ public class LiteDbQueryableMethodTranslatingExpressionVisitor
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateCount(ShapedQueryExpression source, LambdaExpression? predicate)
-        => null; // Client evaluation
+    {
+        if (source.QueryExpression is LiteDbQueryExpression liteDbQuery)
+        {
+            if (predicate is not null)
+                liteDbQuery.AddPredicate(predicate);
+
+            liteDbQuery.SetCount();
+            return source.UpdateShaperExpression(Expression.Constant(0));
+        }
+
+        return null;
+    }
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateDefaultIfEmpty(ShapedQueryExpression source, Expression? defaultValue)
@@ -99,7 +110,18 @@ public class LiteDbQueryableMethodTranslatingExpressionVisitor
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateFirstOrDefault(ShapedQueryExpression source, LambdaExpression? predicate, Type returnType, bool returnDefault)
-        => null; // Client evaluation
+    {
+        if (source.QueryExpression is LiteDbQueryExpression liteDbQuery)
+        {
+            if (predicate is not null)
+                liteDbQuery.AddPredicate(predicate);
+
+            liteDbQuery.SetElementOperator(returnDefault ? ElementOperator.FirstOrDefault : ElementOperator.First);
+            return source;
+        }
+
+        return null;
+    }
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateGroupBy(ShapedQueryExpression source, LambdaExpression keySelector, LambdaExpression? elementSelector, LambdaExpression? resultSelector)
@@ -115,11 +137,22 @@ public class LiteDbQueryableMethodTranslatingExpressionVisitor
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateJoin(ShapedQueryExpression outer, ShapedQueryExpression inner, LambdaExpression outerKeySelector, LambdaExpression innerKeySelector, LambdaExpression resultSelector)
-        => null; // Client evaluation
+        => null; // Client evaluation — use AsEnumerable() for cross-collection joins
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateLastOrDefault(ShapedQueryExpression source, LambdaExpression? predicate, Type returnType, bool returnDefault)
-        => null; // Client evaluation
+    {
+        if (source.QueryExpression is LiteDbQueryExpression liteDbQuery)
+        {
+            if (predicate is not null)
+                liteDbQuery.AddPredicate(predicate);
+
+            liteDbQuery.SetElementOperator(returnDefault ? ElementOperator.LastOrDefault : ElementOperator.Last);
+            return source;
+        }
+
+        return null;
+    }
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateLeftJoin(ShapedQueryExpression outer, ShapedQueryExpression inner, LambdaExpression outerKeySelector, LambdaExpression innerKeySelector, LambdaExpression resultSelector)
@@ -131,7 +164,18 @@ public class LiteDbQueryableMethodTranslatingExpressionVisitor
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateLongCount(ShapedQueryExpression source, LambdaExpression? predicate)
-        => null; // Client evaluation
+    {
+        if (source.QueryExpression is LiteDbQueryExpression liteDbQuery)
+        {
+            if (predicate is not null)
+                liteDbQuery.AddPredicate(predicate);
+
+            liteDbQuery.SetLongCount();
+            return source.UpdateShaperExpression(Expression.Constant(0L));
+        }
+
+        return null;
+    }
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateMax(ShapedQueryExpression source, LambdaExpression? selector, Type resultType)
@@ -147,7 +191,15 @@ public class LiteDbQueryableMethodTranslatingExpressionVisitor
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateOrderBy(ShapedQueryExpression source, LambdaExpression keySelector, bool ascending)
-        => null; // Client evaluation
+    {
+        if (source.QueryExpression is LiteDbQueryExpression liteDbQuery)
+        {
+            liteDbQuery.AddOrdering(keySelector, ascending, clearExisting: true);
+            return source;
+        }
+
+        return null;
+    }
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateReverse(ShapedQueryExpression source)
@@ -155,7 +207,15 @@ public class LiteDbQueryableMethodTranslatingExpressionVisitor
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateSelect(ShapedQueryExpression source, LambdaExpression selector)
-        => null; // Client evaluation
+    {
+        if (source.QueryExpression is LiteDbQueryExpression liteDbQuery)
+        {
+            liteDbQuery.SetSelector(selector);
+            return source;
+        }
+
+        return null;
+    }
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateSelectMany(ShapedQueryExpression source, LambdaExpression collectionSelector, LambdaExpression resultSelector)
@@ -167,7 +227,18 @@ public class LiteDbQueryableMethodTranslatingExpressionVisitor
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateSingleOrDefault(ShapedQueryExpression source, LambdaExpression? predicate, Type returnType, bool returnDefault)
-        => null; // Client evaluation
+    {
+        if (source.QueryExpression is LiteDbQueryExpression liteDbQuery)
+        {
+            if (predicate is not null)
+                liteDbQuery.AddPredicate(predicate);
+
+            liteDbQuery.SetElementOperator(returnDefault ? ElementOperator.SingleOrDefault : ElementOperator.Single);
+            return source;
+        }
+
+        return null;
+    }
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateSkip(ShapedQueryExpression source, Expression count)
@@ -191,7 +262,15 @@ public class LiteDbQueryableMethodTranslatingExpressionVisitor
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateThenBy(ShapedQueryExpression source, LambdaExpression keySelector, bool ascending)
-        => null; // Client evaluation
+    {
+        if (source.QueryExpression is LiteDbQueryExpression liteDbQuery)
+        {
+            liteDbQuery.AddOrdering(keySelector, ascending);
+            return source;
+        }
+
+        return null;
+    }
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateUnion(ShapedQueryExpression source1, ShapedQueryExpression source2)
@@ -199,5 +278,13 @@ public class LiteDbQueryableMethodTranslatingExpressionVisitor
 
     /// <inheritdoc />
     protected override ShapedQueryExpression? TranslateWhere(ShapedQueryExpression source, LambdaExpression predicate)
-        => null; // Client evaluation
+    {
+        if (source.QueryExpression is LiteDbQueryExpression liteDbQuery)
+        {
+            liteDbQuery.AddPredicate(predicate);
+            return source;
+        }
+
+        return null;
+    }
 }
